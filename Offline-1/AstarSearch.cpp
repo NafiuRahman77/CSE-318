@@ -6,19 +6,6 @@
 
 using namespace std;
 
-struct BoardHash {
-    std::size_t operator()(const std::vector<std::vector<int>>& board) const {
-        std::size_t seed = board.size();
-        for (const auto& row : board) {
-            for (const auto& value : row) {
-                seed ^= value + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-            }
-        }
-        return seed;
-    }
-};
-
-
 int manhattanHeuristic(vector<vector<int>> board,int k) {
 
         int heuristicCost = 0;
@@ -232,13 +219,13 @@ void solveManhattan(int k, const vector<vector<int>>& board, const ManhattanComp
     SearchNode* sn = initialNode;
     vector<SearchNode*> closedList;
 
-    unordered_set<vector<vector<int>>, BoardHash> visitedStates;
+    set<vector<vector<int>>> visitedStates;
     while (!pq.empty()) {
-        cout << cnt << endl;
-        cnt++;
+        //cout << cnt << endl;
+        //cnt++;
         sn = pq.top();
         pq.pop();
-        exploredNodes++;
+        expandedNodes++;
 
         if (sn->isGoalBoard()) {
             break;
@@ -252,7 +239,7 @@ void solveManhattan(int k, const vector<vector<int>>& board, const ManhattanComp
                     SearchNode* temp = list[i];
                     if (visitedStates.find(temp->board) == visitedStates.end()) {
                         pq.push(temp);
-                        expandedNodes++;
+                        exploredNodes++;
                     }
                 }
             }
@@ -291,10 +278,10 @@ void solveHamming(int k, const vector<vector<int>>& board, const HammingComparat
     SearchNode* sn = initialNode;
     vector<SearchNode*> closedList;
 
-    unordered_set<vector<vector<int>>, BoardHash> visitedStates;
+    set<vector<vector<int>>> visitedStates;
     while (!pq.empty()) {
-        cout << cnt << endl;
-        cnt++;
+        //cout << cnt << endl;
+        //cnt++;
         sn = pq.top();
         pq.pop();
         exploredNodes++;
