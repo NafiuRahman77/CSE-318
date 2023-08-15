@@ -87,20 +87,14 @@ public:
         }
         return rcl;
     }
-    vector<int> getRCL_v(const map<int, int> &sigma_x_map, const map<int, int> &sigma_y_map, int mu, const set<int> &v_prime)
+    vector<int> getRCL_v(const vector<int> &sigma_x_vect, const vector<int> &sigma_y_vect, const vector<int> &sigma_vertex, int mu, const set<int> &v_prime)
     {
         vector<int> rcl;
-        for (auto vertex : v_prime)
+        for (int i = 0; i < v_prime.size(); i++)
         {
-            auto sigma_x_it = sigma_x_map.find(vertex);
-            auto sigma_y_it = sigma_y_map.find(vertex);
-
-            if (sigma_x_it != sigma_x_map.end() && sigma_y_it != sigma_y_map.end())
+            if (max(sigma_x_vect[i], sigma_y_vect[i]) >= mu)
             {
-                if (max(sigma_x_it->second, sigma_y_it->second) > mu)
-                {
-                    rcl.emplace_back(vertex);
-                }
+                rcl.emplace_back(sigma_vertex[i]);
             }
         }
         return rcl;
@@ -114,15 +108,39 @@ public:
         return unionSet;
     }
 
+    set<int> setDifference(const set<int> &setA, const set<int> &setB)
+    {
+        set<int> result;
+        for (int element : setA)
+        {
+            if (setB.find(element) == setB.end())
+            {
+                result.insert(element);
+            }
+        }
+
+        return result;
+    }
+
+    int sigmaCalculator(const set<int> &S, int vertex)
+    {
+        int sum = 0;
+        for (auto i : S)
+        {
+            sum += adjacencyMatrix[vertex][i];
+        }
+
+        return sum;
+    }
     MaxCutResult GRASP()
     {
         int w_star = INT_MIN;
         MaxCutResult result;
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 50; i++)
         {
-            MaxCutResult m1 ;
+            MaxCutResult m1;
             m1 = SemiGreedyMaxCut();
-            MaxCutResult m2 ;
+            MaxCutResult m2;
             m2 = LocalSearch(m1.s, m1.s_prime);
             if (m2.maxCutValue > w_star)
             {
@@ -132,27 +150,13 @@ public:
         return result;
     }
 
-    int sigmaCalculator(const set<int> &S, int vertex)
+    void printSet(const set<int> &s)
     {
-        int sum = 0;
-        for (const auto &e : edgeList)
+        for (auto it : s)
         {
-            if (e.v == vertex)
-            {
-                if (S.count(e.u) > 0)
-                {
-                    sum += e.wt;
-                }
-            }
-            if (e.u == vertex)
-            {
-                if (S.count(e.v) > 0)
-                {
-                    sum += e.wt;
-                }
-            }
+            cout << it << " ";
         }
-        return sum;
+        cout << endl;
     }
 
     MaxCutResult SemiGreedyMaxCut()
@@ -165,33 +169,45 @@ public:
 
         vector<pair<int, int>> rcl_e = getRCL_e(mu);
         int randomIndex = rand() % rcl_e.size();
+
         pair<int, int> selectedEdge = rcl_e[randomIndex];
 
         set<int> X;
         set<int> Y;
+        set<int> XUY;
         X.insert(selectedEdge.first);
+        XUY.insert(selectedEdge.first);
         Y.insert(selectedEdge.second);
+        XUY.insert(selectedEdge.second);
 
         set<int> V;
-        for (const auto &e : edgeList)
-        {
-            V.insert(e.u);
-            V.insert(e.v);
-        }
+        set<int> V_prime;
 
-        while (!(unionSets(X, Y) == V))
+        for (int i = 1; i <= numVertices; i++)
         {
-            set<int> V_prime;
-            set_difference(V.begin(), V.end(), unionSets(X, Y).begin(), unionSets(X, Y).end(), inserter(V_prime, V_prime.end()));
-            int sigma_x_min = INT_MAX, sigma_y_min = INT_MIN, sigma_x_max = INT_MAX, sigma_y_max = INT_MIN;
-            map<int, int> sigma_x_map;
-            map<int, int> sigma_y_map;
+            V.insert(i);
+            V_prime.insert(i);
+        }
+        V_prime.erase(selectedEdge.first);
+        V_prime.erase(selectedEdge.second);
+
+        while (!(XUY == V))
+        {
+
+            int sigma_x_min = INT_MAX, sigma_y_min = INT_MAX, sigma_x_max = INT_MIN, sigma_y_max = INT_MIN;
+
+            vector<int> sigma_x_vect;
+            vector<int> sigma_y_vect;
+            vector<int> sigma_vertex;
+
             for (auto vertex : V_prime)
             {
                 int sigma_x = sigmaCalculator(Y, vertex);
                 int sigma_y = sigmaCalculator(X, vertex);
-                sigma_x_map[vertex] = sigma_x;
-                sigma_y_map[vertex] = sigma_y;
+
+                sigma_x_vect.push_back(sigma_x);
+                sigma_y_vect.push_back(sigma_y);
+                sigma_vertex.push_back(vertex);
                 if (sigma_x < sigma_x_min)
                 {
                     sigma_x_min = sigma_x;
@@ -212,68 +228,157 @@ public:
             Wmin = min(sigma_x_min, sigma_y_min);
             Wmax = max(sigma_x_max, sigma_y_max);
             mu = Wmin + alpha * (Wmax - Wmin);
-            vector<int> rcl_v = getRCL_v(sigma_x_map, sigma_y_map, mu, V_prime);
-            int selectedVertex = rcl_v[rand() % rcl_e.size()];
-            auto sigma_x_it = sigma_x_map.find(selectedVertex);
-            auto sigma_y_it = sigma_y_map.find(selectedVertex);
+            vector<int> rcl_v = getRCL_v(sigma_x_vect, sigma_y_vect, sigma_vertex, mu, V_prime);
+            int selectedVertex = rcl_v[rand() % rcl_v.size()];
+            for (int i : rcl_v)
+            {
+                if (sigma_vertex[i] == selectedVertex)
+                {
+                    selectedVertex = i;
+                    break;
+                }
+            }
 
-            if (sigma_x_it != sigma_x_map.end() && sigma_y_it != sigma_y_map.end())
+            if (sigma_x_vect[selectedVertex] > sigma_y_vect[selectedVertex])
             {
-                if (sigma_x_it->second > sigma_y_it->second)
-                {
-                    X.insert(selectedVertex);
-                }
-                else
-                {
-                    Y.insert(selectedVertex);
-                }
+                X.insert(selectedVertex);
+                XUY.insert(selectedVertex);
+                V_prime.erase(selectedVertex);
+            }
+            else
+            {
+                Y.insert(selectedVertex);
+                XUY.insert(selectedVertex);
+                V_prime.erase(selectedVertex);
             }
         }
-        set<int> s;
-        s.insert(X.begin(), X.end());
-        set<int> s_prime;
-        s_prime.insert(Y.begin(), Y.end());
+       
         double weight = 0;
-        for (const auto &edge : edgeList)
-        {
-            if (s.count(edge.u) > 0 && s_prime.count(edge.v) > 0)
-            {
-                weight += edge.wt;
-            }
-            if (s.count(edge.v) > 0 && s_prime.count(edge.u) > 0)
-            {
-                weight += edge.wt;
-            }
-        }
-        MaxCutResult m(s, s_prime, weight);
+        MaxCutResult m(X, Y, weight);
         return m;
     }
-    MaxCutResult LocalSearch(const set<int> &s, set<int> &s_prime)
+
+    MaxCutResult GreedyMaxCut()
     {
-        set<int> s_;
-        s_.insert(s.begin(), s.end());
-        set<int> s_prime_;
-        s_prime_.insert(s_prime.begin(), s_prime.end());
+
+        int Wmax = getWmax();
+
+        pair<int, int> selectedEdge;
+        for (const auto &e : edgeList)
+        {
+            if (e.wt == Wmax)
+            {
+                selectedEdge.first = e.u;
+                selectedEdge.second = e.v;
+            }
+        }
+
+        set<int> X;
+        set<int> Y;
+        set<int> XUY;
+        X.insert(selectedEdge.first);
+        XUY.insert(selectedEdge.first);
+        Y.insert(selectedEdge.second);
+        XUY.insert(selectedEdge.second);
+
+        set<int> V;
+        set<int> V_prime;
+
+        for (int i = 1; i <= numVertices; i++)
+        {
+            V.insert(i);
+            V_prime.insert(i);
+        }
+        V_prime.erase(selectedEdge.first);
+        V_prime.erase(selectedEdge.second);
+
+        while (!(XUY == V))
+        {
+
+            int sigma_x_min = INT_MAX, sigma_y_min = INT_MAX, sigma_x_max = INT_MIN, sigma_y_max = INT_MIN;
+
+            vector<int> sigma_x_vect;
+            vector<int> sigma_y_vect;
+            vector<int> sigma_vertex;
+
+            for (auto vertex : V_prime)
+            {
+                int sigma_x = sigmaCalculator(Y, vertex);
+                int sigma_y = sigmaCalculator(X, vertex);
+
+                sigma_x_vect.push_back(sigma_x);
+                sigma_y_vect.push_back(sigma_y);
+                sigma_vertex.push_back(vertex);
+
+                if (sigma_x > sigma_x_max)
+                {
+                    sigma_x_max = sigma_x;
+                }
+                if (sigma_y > sigma_y_max)
+                {
+                    sigma_y_max = sigma_y;
+                }
+            }
+
+            Wmax = max(sigma_x_max, sigma_y_max);
+            //cout<<Wmax<<endl;
+            int selectedVertex;
+            for (int i = 0; i < V_prime.size(); i++)
+            {
+                if (max(sigma_x_vect[i], sigma_y_vect[i]) >= Wmax)
+                {
+                    //cout<<"bop"<<endl;
+                    selectedVertex= sigma_vertex[i];
+                }
+            }
+            
+
+            if (sigma_x_vect[selectedVertex] > sigma_y_vect[selectedVertex])
+            {
+                X.insert(selectedVertex);
+                XUY.insert(selectedVertex);
+                V_prime.erase(selectedVertex);
+            }
+            else
+            {
+                Y.insert(selectedVertex);
+                XUY.insert(selectedVertex);
+                V_prime.erase(selectedVertex);
+            }
+        }
+        
+        double weight = 0;
+        MaxCutResult m(X, Y, weight);
+        return m;
+    }
+    MaxCutResult LocalSearch(const set<int> &s, const set<int> &s_prime)
+    {
+        set<int> s_ = s;
+        // s_.insert(s.begin(), s.end());
+        set<int> s_prime_ = s_prime;
+        // s_prime_.insert(s_prime.begin(), s_prime.end());
         bool change = true;
         while (change)
         {
             change = false;
+
             for (int i = 1; i <= numVertices; i++)
             {
+                int sigma_s = sigmaCalculator(s_, i);
+                int sigma_s_prime = sigmaCalculator(s_prime_, i);
                 if (change == true)
                 {
                     break;
                 }
-                if ((sigmaCalculator(s_, i) > sigmaCalculator(s_prime_, i) && s_.count(i) > 0))
+                if ((sigma_s > sigma_s_prime && s_.count(i) > 0))
                 {
                     s_.erase(i);
                     s_prime_.insert(i);
-                    // S_prime.add(vertex);
                     change = true;
                 }
                 else
                 {
-                    if ((sigmaCalculator(s_prime_, i) > sigmaCalculator(s_, i) && s_prime_.count(i) > 0))
+                    if ((sigma_s_prime > sigma_s && s_prime_.count(i) > 0))
                     {
                         s_prime_.erase(i);
                         s_.insert(i);
@@ -294,6 +399,7 @@ public:
                 weight += edge.wt;
             }
         }
+
         MaxCutResult m(s_, s_prime_, weight);
         return m;
     }
@@ -301,5 +407,25 @@ public:
 
 int main()
 {
-    
+
+    int n, m; // Number of vertices and edges
+    std::ifstream inputFile("a.rud");
+
+    if (!inputFile)
+    {
+        std::cerr << "Error opening input file." << std::endl;
+        return 1;
+    }
+
+    inputFile >> n >> m;
+    Graph g(n);
+
+    for (int i = 0; i < m; ++i)
+    {
+        int v1, v2;
+        int wt;
+        inputFile >> v1 >> v2 >> wt;
+        g.addEdge(v1, v2, wt);
+    }
+    cout << (g.GRASP().maxCutValue) << endl;
 }
