@@ -24,6 +24,8 @@ public:
     set<int> s;
     set<int> s_prime;
     int maxCutValue;
+    int localSearchAvg;
+    int localSearchiter;
 
     MaxCutResult() : maxCutValue(0) {}
 
@@ -132,23 +134,6 @@ public:
 
         return sum;
     }
-    MaxCutResult GRASP()
-    {
-        int w_star = INT_MIN;
-        MaxCutResult result;
-        for (int i = 0; i < 50; i++)
-        {
-            MaxCutResult m1;
-            m1 = SemiGreedyMaxCut();
-            MaxCutResult m2;
-            m2 = LocalSearch(m1.s, m1.s_prime);
-            if (m2.maxCutValue > w_star)
-            {
-                result = m2;
-            }
-        }
-        return result;
-    }
 
     void printSet(const set<int> &s)
     {
@@ -196,8 +181,8 @@ public:
 
             int sigma_x_min = INT_MAX, sigma_y_min = INT_MAX, sigma_x_max = INT_MIN, sigma_y_max = INT_MIN;
 
-            vector<int> sigma_x_vect;
-            vector<int> sigma_y_vect;
+            vector<int> sigma_x_vect(numVertices + 1, 0);
+            vector<int> sigma_y_vect(numVertices + 1, 0);
             vector<int> sigma_vertex;
 
             for (auto vertex : V_prime)
@@ -205,8 +190,10 @@ public:
                 int sigma_x = sigmaCalculator(Y, vertex);
                 int sigma_y = sigmaCalculator(X, vertex);
 
-                sigma_x_vect.push_back(sigma_x);
-                sigma_y_vect.push_back(sigma_y);
+                // sigma_x_vect.push_back(sigma_x);
+                // sigma_y_vect.push_back(sigma_y);
+                sigma_x_vect[vertex] = sigma_x;
+                sigma_y_vect[vertex] = sigma_y;
                 sigma_vertex.push_back(vertex);
                 if (sigma_x < sigma_x_min)
                 {
@@ -228,16 +215,29 @@ public:
             Wmin = min(sigma_x_min, sigma_y_min);
             Wmax = max(sigma_x_max, sigma_y_max);
             mu = Wmin + alpha * (Wmax - Wmin);
-            vector<int> rcl_v = getRCL_v(sigma_x_vect, sigma_y_vect, sigma_vertex, mu, V_prime);
-            int selectedVertex = rcl_v[rand() % rcl_v.size()];
-            for (int i : rcl_v)
+            // vector<int> rcl_v = getRCL_v(sigma_x_vect, sigma_y_vect, sigma_vertex, mu, V_prime);
+            // int selectedVertex = rcl_v[rand() % rcl_v.size()];
+            // for (int i : rcl_v)
+            // {
+            //     if (sigma_vertex[i] == selectedVertex)
+            //     {
+            //         selectedVertex = i;
+            //         break;
+            //     }
+            // }
+            vector<int> restricted_candidate_vertex_list;
+            int selectedVertex;
+            for (auto i : V_prime)
             {
-                if (sigma_vertex[i] == selectedVertex)
+                if (max(sigma_x_vect[i], sigma_y_vect[i]) >= Wmax)
                 {
-                    selectedVertex = i;
-                    break;
+                    // cout<<"bop"<<endl;
+                    restricted_candidate_vertex_list.push_back(i);
                 }
             }
+
+            int r = rand() % restricted_candidate_vertex_list.size();
+            selectedVertex = restricted_candidate_vertex_list[r];
 
             if (sigma_x_vect[selectedVertex] > sigma_y_vect[selectedVertex])
             {
@@ -252,14 +252,26 @@ public:
                 V_prime.erase(selectedVertex);
             }
         }
-       
+
         double weight = 0;
+        for (const auto &e : edgeList)
+        {
+            if (X.count(e.u) > 0 && Y.count(e.v) > 0)
+            {
+                weight += e.wt;
+            }
+            if (X.count(e.v) > 0 && Y.count(e.u) > 0)
+            {
+                weight += e.wt;
+            }
+        }
         MaxCutResult m(X, Y, weight);
         return m;
     }
 
     MaxCutResult GreedyMaxCut()
     {
+        srand(1);
 
         int Wmax = getWmax();
 
@@ -272,6 +284,7 @@ public:
                 selectedEdge.second = e.v;
             }
         }
+        // cout<<selectedEdge.first<<selectedEdge.second<<endl;
 
         set<int> X;
         set<int> Y;
@@ -297,8 +310,8 @@ public:
 
             int sigma_x_min = INT_MAX, sigma_y_min = INT_MAX, sigma_x_max = INT_MIN, sigma_y_max = INT_MIN;
 
-            vector<int> sigma_x_vect;
-            vector<int> sigma_y_vect;
+            vector<int> sigma_x_vect(numVertices + 1, 0);
+            vector<int> sigma_y_vect(numVertices + 1, 0);
             vector<int> sigma_vertex;
 
             for (auto vertex : V_prime)
@@ -306,8 +319,10 @@ public:
                 int sigma_x = sigmaCalculator(Y, vertex);
                 int sigma_y = sigmaCalculator(X, vertex);
 
-                sigma_x_vect.push_back(sigma_x);
-                sigma_y_vect.push_back(sigma_y);
+                // sigma_x_vect.push_back(sigma_x);
+                // sigma_y_vect.push_back(sigma_y);
+                sigma_x_vect[vertex] = sigma_x;
+                sigma_y_vect[vertex] = sigma_y;
                 sigma_vertex.push_back(vertex);
 
                 if (sigma_x > sigma_x_max)
@@ -321,17 +336,20 @@ public:
             }
 
             Wmax = max(sigma_x_max, sigma_y_max);
-            //cout<<Wmax<<endl;
+            // cout<<Wmax<<endl;
+            vector<int> restricted_candidate_vertex_list;
             int selectedVertex;
-            for (int i = 0; i < V_prime.size(); i++)
+            for (auto i : V_prime)
             {
                 if (max(sigma_x_vect[i], sigma_y_vect[i]) >= Wmax)
                 {
-                    //cout<<"bop"<<endl;
-                    selectedVertex= sigma_vertex[i];
+                    // cout<<"bop"<<endl;
+                    restricted_candidate_vertex_list.push_back(i);
                 }
             }
-            
+
+            int r = rand() % restricted_candidate_vertex_list.size();
+            selectedVertex = restricted_candidate_vertex_list[r];
 
             if (sigma_x_vect[selectedVertex] > sigma_y_vect[selectedVertex])
             {
@@ -346,8 +364,137 @@ public:
                 V_prime.erase(selectedVertex);
             }
         }
-        
+
         double weight = 0;
+
+        for (const auto &e : edgeList)
+        {
+            if (X.count(e.u) > 0 && Y.count(e.v) > 0)
+            {
+                weight += e.wt;
+            }
+            if (X.count(e.v) > 0 && Y.count(e.u) > 0)
+            {
+                weight += e.wt;
+            }
+        }
+
+        MaxCutResult m(X, Y, weight);
+        return m;
+    }
+
+    MaxCutResult RandomizedMaxCut()
+    {
+        srand(static_cast<unsigned int>(time(nullptr)));
+        double alpha = 0;
+        int Wmin = getWmin();
+        int Wmax = getWmax();
+        double mu = Wmin + alpha * (Wmax - Wmin);
+
+        vector<pair<int, int>> rcl_e = getRCL_e(mu);
+        int randomIndex = rand() % rcl_e.size();
+
+        pair<int, int> selectedEdge = rcl_e[randomIndex];
+
+        set<int> X;
+        set<int> Y;
+        set<int> XUY;
+        X.insert(selectedEdge.first);
+        XUY.insert(selectedEdge.first);
+        Y.insert(selectedEdge.second);
+        XUY.insert(selectedEdge.second);
+
+        set<int> V;
+        set<int> V_prime;
+
+        for (int i = 1; i <= numVertices; i++)
+        {
+            V.insert(i);
+            V_prime.insert(i);
+        }
+        V_prime.erase(selectedEdge.first);
+        V_prime.erase(selectedEdge.second);
+
+        while (!(XUY == V))
+        {
+
+            int sigma_x_min = INT_MAX, sigma_y_min = INT_MAX, sigma_x_max = INT_MIN, sigma_y_max = INT_MIN;
+
+            vector<int> sigma_x_vect(numVertices + 1, 0);
+            vector<int> sigma_y_vect(numVertices + 1, 0);
+            vector<int> sigma_vertex;
+
+            for (auto vertex : V_prime)
+            {
+                int sigma_x = sigmaCalculator(Y, vertex);
+                int sigma_y = sigmaCalculator(X, vertex);
+
+                // sigma_x_vect.push_back(sigma_x);
+                // sigma_y_vect.push_back(sigma_y);
+                sigma_x_vect[vertex] = sigma_x;
+                sigma_y_vect[vertex] = sigma_y;
+                sigma_vertex.push_back(vertex);
+                if (sigma_x < sigma_x_min)
+                {
+                    sigma_x_min = sigma_x;
+                }
+                if (sigma_y < sigma_y_min)
+                {
+                    sigma_y_min = sigma_y;
+                }
+                if (sigma_x > sigma_x_max)
+                {
+                    sigma_x_max = sigma_x;
+                }
+                if (sigma_y > sigma_y_max)
+                {
+                    sigma_y_max = sigma_y;
+                }
+            }
+            Wmin = min(sigma_x_min, sigma_y_min);
+            Wmax = max(sigma_x_max, sigma_y_max);
+            mu = Wmin + alpha * (Wmax - Wmin);
+           
+            vector<int> restricted_candidate_vertex_list;
+            int selectedVertex;
+            for (auto i : V_prime)
+            {
+                if (max(sigma_x_vect[i], sigma_y_vect[i]) >= Wmax)
+                {
+                    // cout<<"bop"<<endl;
+                    restricted_candidate_vertex_list.push_back(i);
+                }
+            }
+
+            int r = rand() % restricted_candidate_vertex_list.size();
+            selectedVertex = restricted_candidate_vertex_list[r];
+
+            if (sigma_x_vect[selectedVertex] > sigma_y_vect[selectedVertex])
+            {
+                X.insert(selectedVertex);
+                XUY.insert(selectedVertex);
+                V_prime.erase(selectedVertex);
+            }
+            else
+            {
+                Y.insert(selectedVertex);
+                XUY.insert(selectedVertex);
+                V_prime.erase(selectedVertex);
+            }
+        }
+
+        double weight = 0;
+        for (const auto &e : edgeList)
+        {
+            if (X.count(e.u) > 0 && Y.count(e.v) > 0)
+            {
+                weight += e.wt;
+            }
+            if (X.count(e.v) > 0 && Y.count(e.u) > 0)
+            {
+                weight += e.wt;
+            }
+        }
         MaxCutResult m(X, Y, weight);
         return m;
     }
@@ -358,10 +505,11 @@ public:
         set<int> s_prime_ = s_prime;
         // s_prime_.insert(s_prime.begin(), s_prime.end());
         bool change = true;
+        int iter = 0;
         while (change)
         {
             change = false;
-
+            iter++;
             for (int i = 1; i <= numVertices; i++)
             {
                 int sigma_s = sigmaCalculator(s_, i);
@@ -401,7 +549,35 @@ public:
         }
 
         MaxCutResult m(s_, s_prime_, weight);
+        m.localSearchiter = iter;
         return m;
+    }
+
+    MaxCutResult GRASP()
+    {
+        int w_star = INT_MIN;
+        MaxCutResult result;
+        int avgval = 0;
+        int avgiter = 0;
+        for (int i = 0; i < 50; i++)
+        {
+            MaxCutResult m1;
+            m1 = SemiGreedyMaxCut();
+            MaxCutResult m2;
+            m2 = LocalSearch(m1.s, m1.s_prime);
+            avgval += m2.maxCutValue;
+            avgiter += m2.localSearchiter;
+            if (m2.maxCutValue > w_star)
+            {
+                w_star=m2.maxCutValue;
+                result = m2;
+            }
+        }
+        avgval = avgval / 50;
+        avgiter = avgiter / 50;
+        result.localSearchAvg = avgval;
+        result.localSearchiter = avgiter;
+        return result;
     }
 };
 
@@ -427,5 +603,20 @@ int main()
         inputFile >> v1 >> v2 >> wt;
         g.addEdge(v1, v2, wt);
     }
-    cout << (g.GRASP().maxCutValue) << endl;
+
+    cout << g.GreedyMaxCut().maxCutValue << endl;
+    int semiGreedyavg = 0;
+    for (int i = 0; i < 10; i++)
+    {
+        semiGreedyavg += g.SemiGreedyMaxCut().maxCutValue;
+    }
+    cout << semiGreedyavg / 10 << endl;
+    int randavg = 0;
+    for (int i = 0; i < 10; i++)
+    {
+        randavg += g.RandomizedMaxCut().maxCutValue;
+    }
+    cout << randavg / 10 << endl;
+
+    cout << (g.GRASP().maxCutValue) << " " << g.GRASP().localSearchAvg << " " << g.GRASP().localSearchiter << endl;
 }
