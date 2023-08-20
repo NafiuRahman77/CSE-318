@@ -593,19 +593,22 @@ int main()
         g.addEdge(v1, v2, wt);
     }
 
-    cout << g.GreedyMaxCut().maxCutValue << endl;
+    cout <<"Greedy Approach : "<< g.GreedyMaxCut().maxCutValue << endl;
     int semiGreedyavg = 0;
     for (int i = 0; i < 10; i++)
     {
         semiGreedyavg += g.SemiGreedyMaxCut().maxCutValue;
     }
-    cout << semiGreedyavg / 10 << endl;
+    cout <<"Semi-Greedy Approach : "<< semiGreedyavg / 10 << endl;
     int randavg = 0;
     for (int i = 0; i < 10; i++)
     {
         randavg += g.RandomizedMaxCut().maxCutValue;
     }
-    cout << randavg / 10 << endl;
+     cout <<"Randomized Approach : "<< randavg / 10 << endl;
 
-    cout << (g.GRASP().maxCutValue) << " " << g.GRASP().localSearchAvg << " " << g.GRASP().localSearchiter << endl;
+     cout <<"GRASP :"<<endl;
+     cout<<"Best Value: " <<(g.GRASP().maxCutValue) <<endl;
+     cout<<"Local Search Best Value: "<<g.GRASP().localSearchAvg<<endl;
+     cout<<"Local Search Iterations:  " << g.GRASP().localSearchiter << endl;
 }
