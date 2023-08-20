@@ -215,16 +215,7 @@ public:
             Wmin = min(sigma_x_min, sigma_y_min);
             Wmax = max(sigma_x_max, sigma_y_max);
             mu = Wmin + alpha * (Wmax - Wmin);
-            // vector<int> rcl_v = getRCL_v(sigma_x_vect, sigma_y_vect, sigma_vertex, mu, V_prime);
-            // int selectedVertex = rcl_v[rand() % rcl_v.size()];
-            // for (int i : rcl_v)
-            // {
-            //     if (sigma_vertex[i] == selectedVertex)
-            //     {
-            //         selectedVertex = i;
-            //         break;
-            //     }
-            // }
+           
             vector<int> restricted_candidate_vertex_list;
             int selectedVertex;
             for (auto i : V_prime)
@@ -319,8 +310,6 @@ public:
                 int sigma_x = sigmaCalculator(Y, vertex);
                 int sigma_y = sigmaCalculator(X, vertex);
 
-                // sigma_x_vect.push_back(sigma_x);
-                // sigma_y_vect.push_back(sigma_y);
                 sigma_x_vect[vertex] = sigma_x;
                 sigma_y_vect[vertex] = sigma_y;
                 sigma_vertex.push_back(vertex);
