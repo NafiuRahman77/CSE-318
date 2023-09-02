@@ -220,7 +220,7 @@ public:
             int selectedVertex;
             for (auto i : V_prime)
             {
-                if (max(sigma_x_vect[i], sigma_y_vect[i]) >= Wmax)
+                if (max(sigma_x_vect[i], sigma_y_vect[i]) >= mu)
                 {
                     // cout<<"bop"<<endl;
                     restricted_candidate_vertex_list.push_back(i);
@@ -448,7 +448,7 @@ public:
             int selectedVertex;
             for (auto i : V_prime)
             {
-                if (max(sigma_x_vect[i], sigma_y_vect[i]) >= Wmax)
+                if (max(sigma_x_vect[i], sigma_y_vect[i]) >= mu)
                 {
                     // cout<<"bop"<<endl;
                     restricted_candidate_vertex_list.push_back(i);
