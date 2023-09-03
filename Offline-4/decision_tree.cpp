@@ -8,50 +8,40 @@ DecisionTree::DecisionTree()
     isLeaf = false;
     current_attribute = INT_MAX;
     verdict = INT_MAX;
-    // std::vector<bool> attribute_used(6, true);
 }
 
 std::vector<std::vector<Car>> DecisionTree::split_by_attr(std::vector<Car> carlist, int attr)
 {
-    // std::cout << "split debug" << std::endl;
+
     std::vector<std::vector<Car>> split(d.attribute_value_names[attr].size());
 
     for (int i = 0; i < carlist.size(); i++)
     {
-        // std::cout << carlist[i].own_attribute_values[attr]<< " ";
         split[carlist[i].own_attribute_values[attr]].push_back(carlist[i]);
     }
-    // for (int i = 0; i < split.size(); i++)
-    // {
-    //     for (int j = 0; j < split[i].size(); j++)
-    //     {
-    //         //std::cout << split[i][j].verdict_string << " ";
-    //     }
-    //     //std::cout << std::endl;
-    // }
+
     return split;
 }
 
 double DecisionTree::entropy(std::vector<Car> carlist)
 {
-    std::vector<int> temp(d.verdict.size(), 0);
-    for (int i = 0; i < carlist.size(); i++)
+
+    std::unordered_map<int, int> verdict_counts;
+    for (const Car &car : carlist)
     {
-        int j = carlist[i].verdict;
-        temp[j]++;
+        verdict_counts[car.verdict]++;
     }
 
-    double ans = 0;
-    for (int i = 0; i < d.verdict.size(); i++)
+    double entropy = 0.0;
+    int total_samples = carlist.size();
+
+    for (const auto &pair : verdict_counts)
     {
-        if (temp[i] > 0)
-        {
-            double f = (double)temp[i] / (double)carlist.size();
-            f *= log(1.0 / (double)f) / log(2.0);
-            ans += f;
-        }
+        double probability = static_cast<double>(pair.second) / total_samples;
+        entropy -= probability * log2(probability);
     }
-    return ans;
+
+    return entropy;
 }
 
 double DecisionTree::gain(std::vector<Car> carlist, int attr)
@@ -82,7 +72,6 @@ void DecisionTree::learn(std::vector<Car> examples, std::vector<bool> attribute,
     }
     else if (all_same(examples))
     {
-        // std::cout <<"debug" << std::endl;
         isLeaf = true;
         verdict = plurality(examples);
     }
@@ -91,14 +80,14 @@ void DecisionTree::learn(std::vector<Car> examples, std::vector<bool> attribute,
         isLeaf = true;
         verdict = plurality(examples);
     }
-    else if(examples.size()==parent_examples.size()){
-        isLeaf=true;
-        verdict=plurality(parent_examples);
+    else if (examples.size() == parent_examples.size())
+    {
+        isLeaf = true;
+        verdict = plurality(parent_examples);
     }
     else
     {
         current_attribute = best_attr(attribute, examples);
-        // std::cout << current_attribute << "debug" << std::endl;
         std::vector<std::vector<Car>> splitted = split_by_attr(examples, current_attribute);
         attribute[current_attribute] = false;
         for (int i = 0; i < d.attribute_value_names[current_attribute].size(); i++)
@@ -126,11 +115,9 @@ int DecisionTree::best_attr(std::vector<bool> attribute, std::vector<Car> carlis
     int index = 0;
     for (int i = 0; i < attribute.size(); i++)
     {
-        // std::cout<<"bip"<<std::endl;
         if (attribute[i] == true)
         {
             double g = gain(carlist, i);
-            // std::cout<<"g "<<g<<std::endl;
             if (g > mx)
             {
                 mx = g;

@@ -20,7 +20,7 @@ int main()
     std::string line;
     while (std::getline(inputFile, line))
     {
-        // cout<<c++<<endl;
+
         std::istringstream iss(line);
         std::string token;
 
@@ -31,7 +31,6 @@ int main()
             if (std::getline(iss, token, ','))
             {
                 car.attribute_values_string.push_back(token);
-                // cout<<token<<endl;
             }
             else
             {
@@ -50,10 +49,7 @@ int main()
             std::cerr << "Error parsing verdict." << std::endl;
             return 1;
         }
-        // cout<<"bop"<<endl;
     }
-    // cout<<"bnuku"<<endl;
-    cout << cars.size() << endl;
     for (int i = 0; i < cars.size(); i++)
     {
 
@@ -62,21 +58,13 @@ int main()
 
     inputFile.close();
 
-    // dt.learn(cars,v,{});
-    // cout<<dt.infer(cars[0])<<endl;
-    // cout<<dt.infer(cars[1])<<endl;
-    // cout<<dt.infer(cars[2])<<endl;
-    // cout << cars[0].verdict << endl;
-    // cout << cars[1].verdict << endl;
-    // cout << cars[2].verdict << endl;
-
     double accuracy_sum = 0;
     double mean_accuracy;
     vector<double> means;
 
     for (int i = 0; i < 20; i++)
     {
-        cout << i << endl;
+
         random_device rd;
         mt19937 g(rd());
         shuffle(cars.begin(), cars.end(), g);
@@ -99,8 +87,6 @@ int main()
         }
         accuracy_sum += (double)match / test_set.size();
         means.push_back((double)match / test_set.size());
-        cout << (double)match / test_set.size() << endl;
-        ;
     }
     mean_accuracy = accuracy_sum / 20;
     cout << "Mean accuracy: " << mean_accuracy * 100 << endl;
