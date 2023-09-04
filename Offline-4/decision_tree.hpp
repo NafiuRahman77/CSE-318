@@ -8,7 +8,7 @@ public:
     Dataset d;
     int current_attribute;
     int verdict;
-    bool isLeaf;
+    bool isLeaf=false;
    // std::vector<bool> attribute_used;
     std::vector<DecisionTree> children;
 

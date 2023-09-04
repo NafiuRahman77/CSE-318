@@ -5,9 +5,7 @@
 
 DecisionTree::DecisionTree()
 {
-    isLeaf = false;
-    current_attribute = INT_MAX;
-    verdict = INT_MAX;
+    
 }
 
 std::vector<std::vector<Car>> DecisionTree::split_by_attr(std::vector<Car> carlist, int attr)
@@ -96,7 +94,6 @@ void DecisionTree::learn(std::vector<Car> examples, std::vector<bool> attribute,
             child.learn(splitted[i], attribute, examples);
             children.push_back(child);
         }
-        attribute[current_attribute] = true;
     }
 }
 
@@ -130,27 +127,43 @@ int DecisionTree::best_attr(std::vector<bool> attribute, std::vector<Car> carlis
 
 bool DecisionTree::attribute_empty(std::vector<bool> attribute)
 {
+    int flag = 0;
     for (int i = 0; i < attribute.size(); i++)
     {
         if (attribute[i])
-            return false;
+            flag = 1;
     }
-    return true;
+    if (flag)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 bool DecisionTree::all_same(std::vector<Car> carlist)
 {
     int verd = carlist[0].verdict;
+    int flag = 0;
 
     for (int i = 1; i < carlist.size(); ++i)
     {
         if (carlist[i].verdict != verd)
         {
-            return false;
+            flag = 1;
         }
     }
 
-    return true;
+    if (flag)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 int DecisionTree::plurality(std::vector<Car> carlist)
