@@ -8,7 +8,7 @@ using namespace std;
 
 int main()
 {
-    std::ifstream inputFile("car.data");
+    std::ifstream inputFile("data/car.data");
     if (!inputFile.is_open())
     {
         std::cerr << "Error opening file." << std::endl;
